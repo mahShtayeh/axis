@@ -4,6 +4,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -30,7 +34,16 @@ public class Account extends Auditable {
     private UUID id;
 
     /**
+     * Owner username
+     */
+    @Email(message = "error.account.invalidUsername")
+    @NotEmpty(message = "error.account.missingOrEmptyUsername")
+    private String username;
+
+    /**
      * Current balance
      */
+    @NotNull(message = "error.account.missingBalance")
+    @Positive(message = "error.account.invalidBalance")
     private BigDecimal balance;
 }

@@ -95,7 +95,7 @@ public class RestAspect {
 
         final LocalDateTime endTime = LocalDateTime.now();
         final long executionMillis = Duration.between(startTime, endTime).toMillis();
-        apiResponse.setExecutionTime(MessageFormat.format("{0} ms", executionMillis));
+        apiResponse.setExecutionTime(MessageFormat.format("{0}ms", executionMillis));
         if (log.isInfoEnabled()) {
             log.info("Exit: {}-- {} | " +
                             "Method: {}() | " +

@@ -39,7 +39,7 @@ public class RestResponse<P> {
     /**
      * Represents the time taken for the execution of the API response.
      */
-    @Schema(description = "Execution time of the API")
+    @Schema(description = "Execution time of the API", example = "1ms")
     private String executionTime;
 
     /**
