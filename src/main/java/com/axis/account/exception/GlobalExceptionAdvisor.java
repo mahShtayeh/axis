@@ -1,7 +1,7 @@
 package com.axis.account.exception;
 
 import com.axis.account.web.ApiError;
-import com.axis.account.web.ApiResponse;
+import com.axis.account.web.RestResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -38,12 +38,12 @@ public class GlobalExceptionAdvisor {
      */
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseEntity<ApiResponse<Object>> handleException(final Exception exception) {
+    public ResponseEntity<RestResponse<Object>> handleException(final Exception exception) {
         final String message = messageSource
                 .getMessage(exception.getMessage(), null, LocaleContextHolder.getLocale());
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(ApiError.builder()
+                .body(RestResponse.error(ApiError.builder()
                         .message(message)
                         .timestamp(LocalDateTime.now())
                         .build()));
@@ -57,7 +57,7 @@ public class GlobalExceptionAdvisor {
      */
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Object>> handleValidationException(final MethodArgumentNotValidException exception) {
+    public ResponseEntity<RestResponse<Object>> handleValidationException(final MethodArgumentNotValidException exception) {
         final List<ApiError> apiErrors = new ArrayList<>();
         exception.getBindingResult().getAllErrors().forEach(apiError -> apiErrors.add(ApiError.builder()
                 .message(messageSource.getMessage(Objects.requireNonNull(apiError.getDefaultMessage()),
@@ -66,7 +66,7 @@ public class GlobalExceptionAdvisor {
                 .build()));
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.builder()
+                .body(RestResponse.builder()
                         .errors(apiErrors)
                         .build());
     }
