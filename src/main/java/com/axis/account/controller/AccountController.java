@@ -4,6 +4,7 @@ import com.axis.account.mapper.AccountMapper;
 import com.axis.account.service.AccountService;
 import com.axis.account.web.RestResponse;
 import com.axis.account.web.request.AccountCreationRequest;
+import com.axis.account.web.response.AccountBalanceResponse;
 import com.axis.account.web.response.AccountCreationResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
@@ -49,6 +51,22 @@ public class AccountController {
         final UUID accountId = accountService.openAccount(accountMapper.toDTO(request));
         return RestResponse.ok(AccountCreationResponse.builder()
                 .accountId(accountId)
+                .build());
+    }
+
+    /**
+     * Retrieves the current balance of the specified account.
+     *
+     * @param accountId Unique identifier of the account whose balance is to be retrieved.
+     * @return A {@code RestResponse} containing an {@code AccountBalanceResponse} with the current balance of the account.
+     */
+    @Operation(summary = "Check Account Balance", description = "Retrieve the current balance of the specified account")
+    @ApiResponse(responseCode = "200", description = "Account balance retrieved successfully")
+    @GetMapping("{accountId}/balance")
+    public RestResponse<AccountBalanceResponse> checkBalance(@PathVariable final UUID accountId) {
+        final BigDecimal balance = accountService.checkBalance(accountId);
+        return RestResponse.ok(AccountBalanceResponse.builder()
+                .balance(balance)
                 .build());
     }
 }

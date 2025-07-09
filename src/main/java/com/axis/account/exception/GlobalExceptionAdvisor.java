@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,8 +56,8 @@ public class GlobalExceptionAdvisor {
      * @param exception MethodArgumentNotValidException exception
      * @return ApiResponse wrapping the error user-friendly details
      */
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<RestResponse<Object>> handleValidationException(final MethodArgumentNotValidException exception) {
         final List<ApiError> apiErrors = new ArrayList<>();
         exception.getBindingResult().getAllErrors().forEach(apiError -> apiErrors.add(ApiError.builder()
@@ -69,5 +70,24 @@ public class GlobalExceptionAdvisor {
                 .body(RestResponse.builder()
                         .errors(apiErrors)
                         .build());
+    }
+
+    /**
+     * Account not-found exception handler
+     *
+     * @param exception Account not-found exception
+     * @return ApiResponse wrapping the error user-friendly details
+     */
+    @ExceptionHandler(AccountNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<RestResponse<Object>> handleException(final AccountNotFoundException exception) {
+        final String message = messageSource
+                .getMessage("error.account.notFound", null, LocaleContextHolder.getLocale());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(RestResponse.error(ApiError.builder()
+                        .message(MessageFormat.format(message, exception.getAccountId()))
+                        .timestamp(LocalDateTime.now())
+                        .build()));
     }
 }
