@@ -40,4 +40,17 @@ public interface AccountService {
      * @throws DBFailureException       if the transaction fails to save or its ID is not generated
      */
     UUID deposit(UUID accountId, BigDecimal amount);
+
+    /**
+     * Withdraws a specified amount from the account with the given account ID.
+     * Updates the account balance and records the transaction.
+     *
+     * @param accountId the unique identifier of the account from which the amount is to be withdrawn
+     * @param amount    the amount to be withdrawn from the account
+     * @return the unique identifier of the transaction created for the withdrawal
+     * @throws AccountNotFoundException if the account with the specified ID does not exist
+     * @throws DBFailureException       if the transaction fails to save, its ID is not generated,
+     *                                  or the account has insufficient funds
+     */
+    UUID withdraw(UUID accountId, BigDecimal amount);
 }

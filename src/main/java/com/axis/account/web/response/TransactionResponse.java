@@ -12,7 +12,7 @@ import java.util.UUID;
  */
 @Schema(description = "REST API response wrapper for account deposit")
 @Builder
-public record DepositResponse(
+public record TransactionResponse(
         @Schema(description = "Deposit transaction Id")
         UUID transactionId
 ) {

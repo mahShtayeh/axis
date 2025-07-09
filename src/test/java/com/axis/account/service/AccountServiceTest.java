@@ -9,6 +9,7 @@ import com.axis.account.repository.AccountRepository;
 import com.axis.account.repository.TransactionRepository;
 import com.axis.account.service.impl.AccountServiceImpl;
 import lombok.NoArgsConstructor;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -99,6 +100,11 @@ class AccountServiceTest {
     private static final UUID TEST_DEPOSIT_ID = UUID.randomUUID();
 
     /**
+     * A constant representing a unique identifier for testing withdrawal transactions.
+     */
+    private static final UUID TEST_WITHDRAWAL_ID = UUID.randomUUID();
+
+    /**
      * Represents the predefined test transaction amount used in account service tests.
      * This amount is specified for simulating transactions such as deposits or withdrawals
      * within the unit tests of the AccountService.
@@ -114,6 +120,16 @@ class AccountServiceTest {
             .account(SAVED_ACCOUNT)
             .amount(TEST_TRANSACTION_AMOUNT)
             .type(Transaction.TransactionType.DEPOSIT)
+            .build();
+
+    /**
+     * Represents a pre-configured withdrawal transaction object for testing purposes in the {@code AccountServiceTest} class.
+     */
+    private static final Transaction SAVED_WITHDRAWAL = Transaction.builder()
+            .id(TEST_WITHDRAWAL_ID)
+            .account(SAVED_ACCOUNT)
+            .amount(TEST_TRANSACTION_AMOUNT)
+            .type(Transaction.TransactionType.WITHDRAWAL)
             .build();
 
     /**
@@ -165,7 +181,7 @@ class AccountServiceTest {
             final BigDecimal currentBalance = accountService.checkBalance(TEST_ACCOUNT_ID);
 
             verify(accountRepository).findById(TEST_ACCOUNT_ID);
-            assertThat(currentBalance).isEqualTo(SAVED_ACCOUNT.getBalance());
+            assertThat(currentBalance).isEqualTo(TEST_BALANCE);
         }
 
         /**
@@ -207,5 +223,41 @@ class AccountServiceTest {
             assertThat(transactionId).isEqualTo(TEST_DEPOSIT_ID);
             assertThat(SAVED_ACCOUNT.getBalance()).isEqualTo(TEST_BALANCE.add(TEST_TRANSACTION_AMOUNT));
         }
+    }
+
+    /**
+     * A nested test class responsible for validating the behavior of the withdrawal feature
+     * within the account service. This class contains test methods that ensure withdrawals
+     * are processed correctly when provided with valid input.
+     *
+     * @author Mahmoud Shtayeh
+     */
+    @Nested
+    @NoArgsConstructor
+    class WithdrawalTests {
+        /**
+         * Tests the withdrawal functionality of the {@code AccountService} by verifying that
+         * a valid transaction ID is returned upon a successful withdrawal operation.
+         */
+        @Test
+        void withdraw_withValidDetails_returnsTransactionId() {
+            when(accountRepository.findById(TEST_ACCOUNT_ID)).thenReturn(Optional.of(SAVED_ACCOUNT));
+            when(transactionRepository.save(any(Transaction.class))).thenReturn(SAVED_WITHDRAWAL);
+
+            final UUID transactionId = accountService.withdraw(TEST_ACCOUNT_ID, TEST_TRANSACTION_AMOUNT);
+
+            verify(transactionRepository).save(any(Transaction.class));
+            assertThat(transactionId).isEqualTo(TEST_WITHDRAWAL_ID);
+            assertThat(SAVED_ACCOUNT.getBalance()).isEqualTo(TEST_BALANCE.subtract(TEST_TRANSACTION_AMOUNT));
+        }
+    }
+
+    /**
+     * This implementation specifically resets the balance of the {@code SAVED_ACCOUNT} object
+     * to the predefined test balance value, {@code TEST_BALANCE}.
+     */
+    @AfterEach
+    void tearDown() {
+        SAVED_ACCOUNT.setBalance(TEST_BALANCE);
     }
 }

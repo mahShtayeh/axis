@@ -3,6 +3,7 @@ package com.axis.account.service.impl;
 import com.axis.account.dto.AccountDTO;
 import com.axis.account.exception.AccountNotFoundException;
 import com.axis.account.exception.DBFailureException;
+import com.axis.account.exception.InsufficientFundsException;
 import com.axis.account.mapper.AccountMapper;
 import com.axis.account.model.Account;
 import com.axis.account.model.Transaction;
@@ -91,6 +92,42 @@ public class AccountServiceImpl implements AccountService {
                 .account(account)
                 .amount(amount)
                 .type(Transaction.TransactionType.DEPOSIT)
+                .build();
+        final Transaction savedTransaction = transactionRepository.save(transientTransaction);
+
+        AssertUtil.notNull(savedTransaction, () -> new DBFailureException("error.transaction.notSaved"));
+        AssertUtil.notNull(savedTransaction.getId(), () -> new DBFailureException("error.transaction.idNotGenerated"));
+        return savedTransaction.getId();
+    }
+
+    /**
+     * Withdraws a specified amount from the account with the given account ID.
+     * Updates the account balance and records the transaction.
+     *
+     * @param accountId the unique identifier of the account from which the amount is to be withdrawn
+     * @param amount    the amount to be withdrawn from the account
+     * @return the unique identifier of the transaction created for the withdrawal
+     * @throws AccountNotFoundException if the account with the specified ID does not exist
+     * @throws DBFailureException       if the transaction fails to save, its ID is not generated,
+     *                                  or the account has insufficient funds
+     */
+    @Override
+    public UUID withdraw(final UUID accountId, final BigDecimal amount) {
+        final Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId));
+
+        AssertUtil.isTrue(account.getBalance().compareTo(amount) >= 0,
+                () -> InsufficientFundsException.builder()
+                        .accountId(accountId)
+                        .balance(account.getBalance())
+                        .amount(amount)
+                        .build());
+
+        account.setBalance(account.getBalance().subtract(amount));
+        final Transaction transientTransaction = Transaction.builder()
+                .account(account)
+                .amount(amount)
+                .type(Transaction.TransactionType.WITHDRAWAL)
                 .build();
         final Transaction savedTransaction = transactionRepository.save(transientTransaction);
 

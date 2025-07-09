@@ -4,6 +4,7 @@ import com.axis.account.web.RestResponse;
 import com.axis.account.web.request.AccountCreationRequest;
 import com.axis.account.web.response.AccountBalanceResponse;
 import com.axis.account.web.response.AccountCreationResponse;
+import com.axis.account.web.response.TransactionResponse;
 import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -139,7 +140,7 @@ class AccountControllerTest {
     @Test
     @Order(3)
     void openAccount_withInvalidBalance_returnsBadRequest() {
-        final AccountCreationRequest invalidRequest = new AccountCreationRequest(TEST_USERNAME, BigDecimal.ZERO);
+        final AccountCreationRequest invalidRequest = new AccountCreationRequest(TEST_USERNAME, BigDecimal.valueOf(-1000));
 
         final ResponseEntity<RestResponse<AccountCreationResponse>> response = restTemplate.exchange(
                 BASE_URL + port + ACCOUNTS_API,
@@ -221,6 +222,57 @@ class AccountControllerTest {
                                         .isEqualTo(MessageFormat
                                                 .format("Account with ID: {0}, NOT FOUND", nonExistingId));
                             });
+                });
+    }
+
+    /**
+     * Tests that performing a deposit operation on a valid account with valid details
+     * correctly returns a response containing a non-null transaction ID and an HTTP status of {@code CREATED}.
+     */
+    @Test
+    @Order(6)
+    void deposit_withValidDetails_returnsTransactionId() {
+        final ResponseEntity<RestResponse<TransactionResponse>> response = restTemplate.exchange(
+                BASE_URL + port + ACCOUNTS_API + "/{accountId}/deposits?amount=1000.00",
+                HttpMethod.POST,
+                null,
+                new ParameterizedTypeReference<>() {
+                },
+                accountId);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        final RestResponse<TransactionResponse> responseBody = response.getBody();
+        assertThat(responseBody)
+                .isNotNull()
+                .satisfies(body -> {
+                    assertThat(body.getPayload()).isNotNull();
+                    assertThat(body.getPayload().transactionId()).isNotNull();
+                });
+    }
+
+    /**
+     * Tests that performing a withdrawal operation on a valid account with valid details
+     * correctly returns a response containing a non-null transaction ID and an HTTP status of {@code CREATED}.
+     */
+    @Test
+    @Order(7)
+    void withdraw_withValidDetails_returnsTransactionId() {
+        final ResponseEntity<RestResponse<TransactionResponse>> response = restTemplate.exchange(
+                BASE_URL + port + ACCOUNTS_API + "/{accountId}/withdraws?amount=1000.00",
+                HttpMethod.POST,
+                null,
+                new ParameterizedTypeReference<>() {
+                },
+                accountId);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        final RestResponse<TransactionResponse> responseBody = response.getBody();
+        assertThat(responseBody)
+                .isNotNull()
+                .satisfies(body -> {
+                    assertThat(body.getPayload()).isNotNull();
+                    assertThat(body.getPayload().transactionId()).isNotNull();
                 });
     }
 }

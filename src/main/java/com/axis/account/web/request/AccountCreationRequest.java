@@ -1,10 +1,7 @@
 package com.axis.account.web.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 
@@ -24,7 +21,7 @@ public record AccountCreationRequest(
 
         @Schema(description = "Owner initial balance", example = "1000.00")
         @NotNull(message = "error.account.missingBalance")
-        @Positive(message = "error.account.invalidBalance")
+        @PositiveOrZero(message = "error.account.invalidBalance")
         BigDecimal balance
 ) {
 }
