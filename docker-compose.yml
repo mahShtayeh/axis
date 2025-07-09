@@ -30,6 +30,18 @@ services:
       - postgres
     restart: unless-stopped
 
+  account:
+      image: mahshtayeh227/account
+      container_name: account
+      ports:
+        - "8000:8000"
+      environment:
+        - SPRING_PROFILES_ACTIVE=docker
+      networks:
+        - postgres
+      depends_on:
+        - postgres
+
 networks:
   postgres:
     driver: bridge

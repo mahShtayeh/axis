@@ -46,6 +46,6 @@ public class Account extends Auditable {
     /**
      * Represents the list of transactions associated with the account.
      */
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
     private List<Transaction> transactions = new ArrayList<>();
 }
