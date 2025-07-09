@@ -4,7 +4,9 @@ import com.axis.account.dto.AccountDTO;
 import com.axis.account.exception.AccountNotFoundException;
 import com.axis.account.mapper.AccountMapper;
 import com.axis.account.model.Account;
+import com.axis.account.model.Transaction;
 import com.axis.account.repository.AccountRepository;
+import com.axis.account.repository.TransactionRepository;
 import com.axis.account.service.impl.AccountServiceImpl;
 import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Nested;
@@ -38,6 +40,12 @@ class AccountServiceTest {
      */
     @Mock
     private AccountRepository accountRepository;
+
+    /**
+     * Mock instance of {@code TransactionRepository} used for testing purposes in {@code AccountServiceTest}.
+     */
+    @Mock
+    private TransactionRepository transactionRepository;
 
     /**
      * Axis accounts POJOs mapper
@@ -86,8 +94,33 @@ class AccountServiceTest {
             .build();
 
     /**
+     * A constant uniquely identifying a test deposit operation for use in unit tests.
+     */
+    private static final UUID TEST_DEPOSIT_ID = UUID.randomUUID();
+
+    /**
+     * Represents the predefined test transaction amount used in account service tests.
+     * This amount is specified for simulating transactions such as deposits or withdrawals
+     * within the unit tests of the AccountService.
+     */
+    private static final BigDecimal TEST_TRANSACTION_AMOUNT = new BigDecimal("1000.00");
+
+    /**
+     * A pre-constructed instance of a deposit transaction used for testing purposes.
+     * This variable is immutable and represents a transaction of type {@code DEPOSIT}.
+     */
+    private static final Transaction SAVED_DEPOSIT = Transaction.builder()
+            .id(TEST_DEPOSIT_ID)
+            .account(SAVED_ACCOUNT)
+            .amount(TEST_TRANSACTION_AMOUNT)
+            .type(Transaction.TransactionType.DEPOSIT)
+            .build();
+
+    /**
      * This nested test class contains tests related to the functionality of opening
      * accounts using the {@link AccountServiceImpl}.
+     *
+     * @author Mahmoud Shtayeh
      */
     @Nested
     @NoArgsConstructor
@@ -115,6 +148,8 @@ class AccountServiceTest {
 
     /**
      * Nested class containing test cases for the {@code checkBalance} method in {@link AccountServiceImpl}.
+     *
+     * @author Mahmoud Shtayeh
      */
     @Nested
     @NoArgsConstructor
@@ -130,7 +165,7 @@ class AccountServiceTest {
             final BigDecimal currentBalance = accountService.checkBalance(TEST_ACCOUNT_ID);
 
             verify(accountRepository).findById(TEST_ACCOUNT_ID);
-            assertThat(currentBalance).isEqualTo(TEST_BALANCE);
+            assertThat(currentBalance).isEqualTo(SAVED_ACCOUNT.getBalance());
         }
 
         /**
@@ -146,6 +181,31 @@ class AccountServiceTest {
                     .isInstanceOf(AccountNotFoundException.class)
                     .extracting("accountId")
                     .isEqualTo(TEST_ACCOUNT_ID);
+        }
+    }
+
+    /**
+     * A nested test class containing unit tests for deposit operations.
+     * Focuses on verifying the functionality of deposits within the AccountService implementation.
+     *
+     * @author Mahmoud Shtayeh
+     */
+    @Nested
+    @NoArgsConstructor
+    class DepositTests {
+        /**
+         * Tests the deposit functionality of the AccountService with valid parameters.
+         */
+        @Test
+        void deposit_withValidDetails_returnsTransactionId() {
+            when(accountRepository.findById(TEST_ACCOUNT_ID)).thenReturn(Optional.of(SAVED_ACCOUNT));
+            when(transactionRepository.save(any(Transaction.class))).thenReturn(SAVED_DEPOSIT);
+
+            final UUID transactionId = accountService.deposit(TEST_ACCOUNT_ID, TEST_TRANSACTION_AMOUNT);
+
+            verify(transactionRepository).save(any(Transaction.class));
+            assertThat(transactionId).isEqualTo(TEST_DEPOSIT_ID);
+            assertThat(SAVED_ACCOUNT.getBalance()).isEqualTo(TEST_BALANCE.add(TEST_TRANSACTION_AMOUNT));
         }
     }
 }

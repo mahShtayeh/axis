@@ -4,8 +4,10 @@ import com.axis.account.mapper.AccountMapper;
 import com.axis.account.service.AccountService;
 import com.axis.account.web.RestResponse;
 import com.axis.account.web.request.AccountCreationRequest;
+import com.axis.account.web.request.DepositRequest;
 import com.axis.account.web.response.AccountBalanceResponse;
 import com.axis.account.web.response.AccountCreationResponse;
+import com.axis.account.web.response.DepositResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -67,6 +69,25 @@ public class AccountController {
         final BigDecimal balance = accountService.checkBalance(accountId);
         return RestResponse.ok(AccountBalanceResponse.builder()
                 .balance(balance)
+                .build());
+    }
+
+    /**
+     * Deposits a specified amount into the account identified by the given account ID.
+     *
+     * @param accountId the unique identifier of the account into which the deposit is to be made
+     * @param request   the deposit request containing the amount to be deposited
+     * @return a {@code RestResponse} containing a {@code DepositResponse} with the transaction ID of the completed deposit
+     */
+    @Operation(summary = "Deposit to Account", description = "Deposit to an account in Axis")
+    @ApiResponse(responseCode = "201", description = "Deposit created successfully")
+    @PostMapping("/{accountId}/deposits")
+    @ResponseStatus(HttpStatus.CREATED)
+    public RestResponse<DepositResponse> deposit(@PathVariable final UUID accountId,
+                                                 final DepositRequest request) {
+        final UUID transactionId = accountService.deposit(accountId, request.amount());
+        return RestResponse.ok(DepositResponse.builder()
+                .transactionId(transactionId)
                 .build());
     }
 }
